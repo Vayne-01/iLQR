@@ -13,7 +13,7 @@ void Dynamic::Jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& ctrl
     out.block(0, 0, state_dim_, 1) = autodiff_out.cast<double>();
 }
 
-autodiff::VectorXreal ParticleDynamic::state_space(const autodiff::VectorXreal& state
+autodiff::VectorXreal MultiVehicle::state_space(const autodiff::VectorXreal& state
                                                            , const autodiff::VectorXreal& ctrl)
 {
     autodiff::VectorXreal out(state_dim_);
@@ -29,7 +29,7 @@ autodiff::VectorXreal ParticleDynamic::state_space(const autodiff::VectorXreal& 
     return out;
 }
 
-autodiff::real ParticleDynamic::acceleration(const autodiff::real x_dot, const autodiff::real u)
+autodiff::real MultiVehicle::acceleration(const autodiff::real x_dot, const autodiff::real u)
 {
     return x_dot * (1.0 - alpha_ * dt_ / m_) + u * dt_ / m_;
 }

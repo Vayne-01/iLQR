@@ -1,4 +1,5 @@
 #include "iLQR.h"
+#include <string>
 
 iLQR::iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, QRCost* cost
            , double max_reg): state_dim_(state_dim), ctrl_dim_(ctrl_dim), N_(N)
@@ -13,11 +14,9 @@ iLQR::iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, QR
     _delta = _delta_0;
 }
 
-void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>* us, std::vector<Eigen::VectorXd>* xs,
-             uint16_t n_iterations, double tol)
+void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>& us, std::vector<Eigen::VectorXd>& xs,
+             uint16_t n_iterations, double tol, bool on_iteration)
 {
-    if(xs == nullptr)
-        xs = new std::vector<Eigen::VectorXd>;
     _mu = 1.0;
     _delta = _delta_0;
 
@@ -52,16 +51,16 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>* us, std::vecto
         _backward_pass(F_x, F_u, L_x, L_u, L_xx, L_ux, L_uu, k, K);
         for(uint8_t j = 0; j < 1; j++)
         {
-            std::vector<Eigen::VectorXd>* xs_new = new std::vector<Eigen::VectorXd>;
-            std::vector<Eigen::VectorXd>* us_new = new std::vector<Eigen::VectorXd>;
+            std::vector<Eigen::VectorXd> xs_new;
+            std::vector<Eigen::VectorXd> us_new;
             _control(xs, us, xs_new, us_new, k, K, alphas[j]);
 
             double J_new = 0.0;
             for(uint16_t i = 0; i < N_; i++)
             {
-                J_new += cost_->l((*xs_new)[i], (*us_new)[i], i);
+                J_new += cost_->l(xs_new[i], us_new[i], i);
             }
-            J_new += cost_->l((*xs_new)[N_], (*us_new)[0], N_, true);
+            J_new += cost_->l(xs_new[N_], us_new[0], N_, true);
 
             if(J_new < J_opt)
             {
@@ -69,9 +68,8 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>* us, std::vecto
                     converged = true;
 
                 J_opt = J_new;
-                delete xs, us;
-                xs = xs_new;
-                us = us_new;
+                xs.swap(xs_new);
+                us.swap(us_new);
                 changed = true;
 
                 _delta = std::min(1.0, _delta) / _delta_0;
@@ -95,35 +93,39 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>* us, std::vecto
             }
         }
 
-        std::cout << "iteration " << i << " " << J_opt << "." << std::endl;
+        if(on_iteration)
+        {
+            std::string info = converged ? "converged" : (accepted ? "accepted" : "failed");
+            std::cout << "iteration " << i << " " << info << " " << J_opt << std::endl;
+        }
 
         if(converged)
             break;
     }
 }
 
-void iLQR::_control(const std::vector<Eigen::VectorXd>* xs, const std::vector<Eigen::VectorXd>* us
-                    , std::vector<Eigen::VectorXd>* xs_new, std::vector<Eigen::VectorXd>* us_new
+void iLQR::_control(const std::vector<Eigen::VectorXd>& xs, const std::vector<Eigen::VectorXd>& us
+                    , std::vector<Eigen::VectorXd>& xs_new, std::vector<Eigen::VectorXd>& us_new
                     , std::vector<Eigen::VectorXd>& k , std::vector<Eigen::MatrixXd>& K, double alpha)
 {
-    xs_new->clear();
-    us_new->clear();
-    xs_new->emplace_back((*xs)[0]);
+    xs_new.clear();
+    us_new.clear();
+    xs_new.emplace_back(xs[0]);
     for(uint16_t i = 0; i < N_; i++)
     {
-        us_new->emplace_back((*us)[i] + alpha * k[i] + K[i] * ((*xs_new)[i] - (*xs)[i]));
-        xs_new->emplace_back(model_->state_space((*xs_new)[i], (*us_new)[i]).cast<double>());
+        us_new.emplace_back(us[i] + alpha * k[i] + K[i] * (xs_new[i] - xs[i]));
+        xs_new.emplace_back(model_->state_space(xs_new[i], us_new[i]).cast<double>());
     }
 }
 
-void iLQR::_forward_rollout(const Eigen::VectorXd& x0, const std::vector<Eigen::VectorXd>* us
-                            , std::vector<Eigen::VectorXd>* xs, std::vector<Eigen::MatrixXd>& F_x
+void iLQR::_forward_rollout(const Eigen::VectorXd& x0, const std::vector<Eigen::VectorXd>& us
+                            , std::vector<Eigen::VectorXd>& xs, std::vector<Eigen::MatrixXd>& F_x
                             , std::vector<Eigen::MatrixXd>& F_u, std::vector<double>& L
                             , std::vector<Eigen::VectorXd>& L_x, std::vector<Eigen::VectorXd>& L_u
                             , std::vector<Eigen::MatrixXd>& L_xx, std::vector<Eigen::MatrixXd>& L_ux
                             , std::vector<Eigen::MatrixXd>& L_uu)
 {
-    xs->clear();
+    xs.clear();
     F_x.clear();
     F_u.clear();
     L.clear();
@@ -133,7 +135,7 @@ void iLQR::_forward_rollout(const Eigen::VectorXd& x0, const std::vector<Eigen::
     L_ux.clear();
     L_uu.clear();
 
-    xs->emplace_back(x0);
+    xs.emplace_back(x0);
 
     Eigen::VectorXd x;
     Eigen::VectorXd u;
@@ -143,12 +145,12 @@ void iLQR::_forward_rollout(const Eigen::VectorXd& x0, const std::vector<Eigen::
     Eigen::MatrixXd F_x_1, F_u_1, L_xx_1, L_ux_1, L_uu_1;
     for(uint16_t i = 0; i < N_; i++)
     {
-        x = (*xs)[i];
-        u = (*us)[i];
+        x = xs[i];
+        u = us[i];
 
             
         model_->Jacobian(x, u, x_1, F_x_1, F_u_1);
-        xs->emplace_back(x_1);
+        xs.emplace_back(x_1);
         F_x.emplace_back(F_x_1);
         F_u.emplace_back(F_u_1);
             
@@ -165,7 +167,7 @@ void iLQR::_forward_rollout(const Eigen::VectorXd& x0, const std::vector<Eigen::
         L_ux.emplace_back(L_ux_1);
         L_uu.emplace_back(L_uu_1);
     }
-    x = (*xs)[N_];
+    x = xs[N_];
     L_1 = cost_->l(x, u, N_, true);
     cost_->l_x(L_x_1, x, u, N_, true);
     cost_->l_xx(L_xx_1, x, u, N_, true);

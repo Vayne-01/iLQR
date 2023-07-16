@@ -16,14 +16,14 @@ public:
                   , Eigen::MatrixXd& jacob_state, Eigen::MatrixXd& jacob_ctrl);
 };
 
-class ParticleDynamic: public Dynamic
+class MultiVehicle: public Dynamic
 {
 private:
     double dt_;     // Discrete time step.
     double m_;      // Mass.
     double alpha_;  // Friction coefficient.
 public:
-    ParticleDynamic(uint16_t state_dim, uint16_t ctrl_dim, double dt, double m, double alpha):
+    MultiVehicle(uint16_t state_dim, uint16_t ctrl_dim, double dt, double m, double alpha):
                      Dynamic(state_dim, ctrl_dim), dt_(dt), m_(m), alpha_(alpha){}
 
     virtual autodiff::VectorXreal state_space(const autodiff::VectorXreal& state, const autodiff::VectorXreal& ctrl);
