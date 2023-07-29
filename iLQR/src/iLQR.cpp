@@ -1,9 +1,5 @@
 #include "iLQR.h"
 #include <string>
-#define _USE_MATH_DEFINES
-#include "matplotlibcpp.h"
-
-namespace plt = matplotlibcpp;
 
 iLQR::iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, Cost* cost
            , double max_reg): state_dim_(state_dim), ctrl_dim_(ctrl_dim), N_(N)
