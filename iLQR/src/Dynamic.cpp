@@ -14,7 +14,7 @@ void Dynamic::Jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& ctrl
 }
 
 autodiff::VectorXreal MultiVehicle::state_space(const autodiff::VectorXreal& state
-                                                           , const autodiff::VectorXreal& ctrl)
+                                                , const autodiff::VectorXreal& ctrl)
 {
     autodiff::VectorXreal out(state_dim_);
     out(0) = state(0) + state(4) * dt_;
@@ -32,4 +32,16 @@ autodiff::VectorXreal MultiVehicle::state_space(const autodiff::VectorXreal& sta
 autodiff::real MultiVehicle::acceleration(const autodiff::real x_dot, const autodiff::real u)
 {
     return x_dot * (1.0 - alpha_ * dt_ / m_) + u * dt_ / m_;
+}
+
+autodiff::VectorXreal MassPoint::state_space(const autodiff::VectorXreal& state
+                                             , const autodiff::VectorXreal& ctrl)
+{
+    autodiff::VectorXreal out(state_dim_);
+    out(0) = state(0) + state(2) * dt_ + 0.5 * ctrl(0) / m_ * dt_ * dt_;
+    out(1) = state(1) + state(3) * dt_ + 0.5 * ctrl(1) / m_ * dt_ * dt_;
+    out(2) = state(2) + ctrl(0) / m_ * dt_;
+    out(3) = state(3) + ctrl(1) / m_ * dt_;
+
+    return out;
 }

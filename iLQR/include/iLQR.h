@@ -9,7 +9,7 @@ class iLQR
 {
 private:
     Dynamic* model_;
-    QRCost*  cost_;
+    Cost*  cost_;
     uint16_t state_dim_;
     uint16_t ctrl_dim_;
     uint16_t N_;
@@ -20,7 +20,7 @@ private:
     double _delta_0;
     double _delta;
 public:
-    iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, QRCost* cost
+    iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, Cost* cost
          , double max_reg = 1e10);
 
     void fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>& us, std::vector<Eigen::VectorXd>& xs,

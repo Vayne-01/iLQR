@@ -30,3 +30,14 @@ public:
 
     autodiff::real acceleration(const autodiff::real x_dot, const autodiff::real u);
 };
+
+class MassPoint: public Dynamic
+{
+private:
+    double dt_;     // Discrete time step.
+    double m_;      // Mass.
+public:
+    MassPoint(uint16_t state_dim, uint16_t ctrl_dim, double dt, double m): Dynamic(state_dim, ctrl_dim), dt_(dt), m_(m){}
+
+    virtual autodiff::VectorXreal state_space(const autodiff::VectorXreal& state, const autodiff::VectorXreal& ctrl);
+};

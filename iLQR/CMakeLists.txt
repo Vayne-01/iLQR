@@ -15,7 +15,12 @@ include_directories(${PROJECT_SOURCE_DIR}/include/
 
 aux_source_directory(src DIR_SRCS)
 
-add_executable(simple_ilqr main.cpp ${DIR_SRCS})
+add_executable(multivehicle multivehicle_exam.cpp ${DIR_SRCS})
 
-target_link_libraries(simple_ilqr autodiff::autodiff Eigen3::Eigen
+target_link_libraries(multivehicle autodiff::autodiff Eigen3::Eigen
+                      Python3::Python Python3::Module Python3::NumPy)
+
+add_executable(MassPointPlanning mass_point_planning.cpp ${DIR_SRCS})
+
+target_link_libraries(MassPointPlanning autodiff::autodiff Eigen3::Eigen
                       Python3::Python Python3::Module Python3::NumPy)

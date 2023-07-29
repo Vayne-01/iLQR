@@ -1,7 +1,11 @@
 #include "iLQR.h"
 #include <string>
+#define _USE_MATH_DEFINES
+#include "matplotlibcpp.h"
 
-iLQR::iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, QRCost* cost
+namespace plt = matplotlibcpp;
+
+iLQR::iLQR(uint16_t state_dim, uint16_t ctrl_dim, uint16_t N, Dynamic* model, Cost* cost
            , double max_reg): state_dim_(state_dim), ctrl_dim_(ctrl_dim), N_(N)
 {
     model_ = model;
@@ -49,7 +53,7 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>& us, std::vecto
             changed = false;
         }
         _backward_pass(F_x, F_u, L_x, L_u, L_xx, L_ux, L_uu, k, K);
-        for(uint8_t j = 0; j < 1; j++)
+        for(uint8_t j = 0; j < 10; j++)
         {
             std::vector<Eigen::VectorXd> xs_new;
             std::vector<Eigen::VectorXd> us_new;
@@ -64,6 +68,20 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>& us, std::vecto
 
             if(J_new < J_opt)
             {
+                /*
+                std::vector<double> point_x, point_y;
+                for(uint16_t i = 0; i < xs.size(); i++)
+                {
+                    point_x.emplace_back(xs_new[i](0));
+                    point_y.emplace_back(xs_new[i](1));
+                }
+                plt::named_plot("mass point", point_x, point_y, "o");
+                plt::title("Trajectory of the two omnidirectional vehicles");
+                plt::xlim(-1, 6);
+                plt::ylim(-2, 2);
+                plt::legend();
+                plt::show();
+                */
                 if(std::fabs((J_opt - J_new) / J_opt) < tol)
                     converged = true;
 

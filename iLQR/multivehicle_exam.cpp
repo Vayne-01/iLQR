@@ -53,7 +53,7 @@ int main()
     plt::title("Trajectory of the two omnidirectional vehicles");
     plt::legend();
     // save figure
-    const char* filename = "../example.png";
+    const char* filename = "../multivehicle.png";
     std::cout << "Saving result to " << filename << std::endl;;
     plt::save(filename);
 }
