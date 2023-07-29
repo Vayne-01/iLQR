@@ -68,20 +68,6 @@ void iLQR::fit(Eigen::VectorXd& x0, std::vector<Eigen::VectorXd>& us, std::vecto
 
             if(J_new < J_opt)
             {
-                /*
-                std::vector<double> point_x, point_y;
-                for(uint16_t i = 0; i < xs.size(); i++)
-                {
-                    point_x.emplace_back(xs_new[i](0));
-                    point_y.emplace_back(xs_new[i](1));
-                }
-                plt::named_plot("mass point", point_x, point_y, "o");
-                plt::title("Trajectory of the two omnidirectional vehicles");
-                plt::xlim(-1, 6);
-                plt::ylim(-2, 2);
-                plt::legend();
-                plt::show();
-                */
                 if(std::fabs((J_opt - J_new) / J_opt) < tol)
                     converged = true;
 
